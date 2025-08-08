@@ -1,6 +1,6 @@
 //io -> means server
 //socket -> means single user
-//socket.on -> Here "on" means listener
+//socket.on -> Here "on" means listener (or event listen karna)
 //socket.emit -> Here "emit" means data ai se leke server ko send karna
 
 require('dotenv').config();
@@ -12,7 +12,12 @@ const generateResponse = require('./src/service/aiService.js');
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 const httpServer = createServer(app);
-const io = new Server(httpServer, { /* options */ });
+const io = new Server(httpServer, { 
+  cors: {
+    origin: "http://localhost:5173", // Adjust 
+  }
+ });
+const chatHistory = []; //Short Term Memory is stored in the array
 io.on("connection", (socket) => {
   console.log("A user connected")
 
@@ -29,14 +34,14 @@ io.on("connection", (socket) => {
           parts: [ { text: data } ]
       });
 
-      const mama = await generateResponse(chatHistory)
+      const response = await generateResponse(chatHistory);
 
       chatHistory.push({
           role: "model",
-          parts: [ { text: mama } ]
+          parts: [ { text: response } ]
       });
 
-      socket.emit("ai-message-response", mama)
+      socket.emit("ai-message-response", response);
 
   })
 });
